@@ -1,0 +1,43 @@
+# --- PYTHON ---
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.py[oc]
+*$py.class
+# C extensions
+*.so
+
+# --- ENVIRONMENTS (uv / venv) ---
+# We ignore the virtual environment folder entirely
+.venv/
+env/
+venv/
+ENV/
+.env
+
+# --- STATIC TYPE CHECKERS & LINTERS ---
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.pytest_cache/
+
+# --- PROJECT CONFIGURATION ---
+# Python version file managed by uv
+.python-version
+
+# --- VS CODE ---
+.vscode/*
+# Allow the extensions.json and settings.json we created
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# --- MACOS SYSTEM FILES ---
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# --- BUILD & PACKAGING ---
+dist/
+build/
+*.egg-info/
+

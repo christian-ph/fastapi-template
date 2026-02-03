@@ -1,0 +1,56 @@
+{
+    // --- PYTHON SPECIFIC CONFIGURATION ---
+    "[python]": {
+        // Sets Ruff as the primary formatter
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        // Automatically formats the code on every save
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            // Auto-fixes linting violations (e.g., unused imports) on save
+            "source.fixAll.ruff": "explicit",
+            // Automatically organizes and sorts imports on save
+            "source.organizeImports.ruff": "explicit"
+        },
+        // Visual guide at the 120-character limit
+        "editor.rulers": [
+            120
+        ]
+    },
+    // --- RUFF CONFIGURATION (Linter + Formatter + Sorter) ---
+    "ruff.enable": true,
+    "ruff.organizeImports": true,
+    "ruff.fixAll": true,
+    "ruff.lint.args": [
+        "--line-length=120",
+        "--ignore=B008",
+        // E (Error), F (Pyflakes), I (Isort), B (Bugbear), UP (Pyupgrade)
+        "--select=E,F,I,B,UP"
+    ],
+    "ruff.format.args": [
+        "--line-length=120"
+    ],
+    // --- MYPY CONFIGURATION (Static Type Checking) ---
+    "mypy-type-checker.reportingScope": "workspace",
+    "mypy-type-checker.args": [
+        "--ignore-missing-imports",
+        "--follow-imports=silent"
+    ],
+    // --- ERROR LENS (Visual Feedback) ---
+    // Displays error messages inline for better visibility
+    "errorLens.enabledDiagnosticLevels": [
+        "error",
+        "warning"
+    ],
+    "errorLens.fontSize": "12px",
+    "errorLens.fontStyleItalic": true,
+    // --- AUTODOCSTRING (Documentation) ---
+    "autoDocstring.docstringFormat": "google",
+    "autoDocstring.guessTypes": true,
+    // --- CLEANUP: DISABLE REDUNDANT BUILT-IN TOOLS ---
+    "python.linting.pylintEnabled": false,
+    "python.linting.enabled": false,
+    "python.formatting.provider": "none",
+    // --- PYLANCE (Language Server Settings) ---
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.autoImportCompletions": true
+}
