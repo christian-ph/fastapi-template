@@ -1,6 +1,6 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from app.infrastructure.config import Settings
 from app.infrastructure.database.models import Base, create_schema
 from urllib.parse import quote_plus
@@ -31,59 +31,61 @@ class DatabaseConnector:
         return uri
     
     def create_engine(self):
-        """Create SQLAlchemy engine using escaped URI"""
+        """Create SQLAlchemy async engine using escaped URI."""
         if self._engine is None:
             self._logger.info("Creating database engine")
-            self._engine = create_engine(
+            self._engine = create_async_engine(
                 self.database_uri,
                 pool_pre_ping=True,
-                echo=self.settings.ENVIRONMENT == "DEV"
+                echo=self.settings.ENVIRONMENT == "DEV",
             )
-            create_schema(self._engine)  # Create schema if needed
         return self._engine
     
     def create_session_factory(self):
-        """Create thread-safe session factory"""
+        """Create async session factory."""
         if self._session_factory is None:
             engine = self.create_engine()
-            self._session_factory = sessionmaker(
+            self._session_factory = async_sessionmaker(
                 bind=engine,
-                autocommit=False,
                 autoflush=False,
-                expire_on_commit=False
+                expire_on_commit=False,
+                class_=AsyncSession,
             )
         return self._session_factory
     
-    def get_session(self):
-        """Get a new database session"""
+    def get_session(self) -> AsyncSession:
+        """Get a new async database session."""
         session_factory = self.create_session_factory()
-        return scoped_session(session_factory)()
+        return session_factory()
     
-    def create_database(self):
-        """Create all database tables"""
+    async def create_database(self):
+        """Create all database tables."""
         try:
             engine = self.create_engine()
-            Base.metadata.create_all(engine)
+            async with engine.begin() as conn:
+                await conn.run_sync(create_schema)
+                await conn.run_sync(Base.metadata.create_all)
             self._logger.info("Database tables created in schema %s", self.settings.DATABASE.DB_SCHEMA)
         except SQLAlchemyError as e:
-            self._logger.error("Error creating database: %s", e)
+            self._logger.error(f"Error creating database: {e}")
             raise
     
-    def drop_database(self):
-        """Drop all database tables"""
+    async def drop_database(self):
+        """Drop all database tables."""
         try:
             engine = self.create_engine()
-            Base.metadata.drop_all(engine)
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.drop_all)
             self._logger.warning("Database tables dropped from schema %s", self.settings.DATABASE.DB_SCHEMA)
         except SQLAlchemyError as e:
-            self._logger.error("Error dropping database: %s", e)
+            self._logger.error(f"Error dropping database: {e}")
             raise
     
-    def health_check(self) -> bool:
-        """Check if database is reachable"""
+    async def health_check(self) -> bool:
+        """Check if database is reachable."""
         try:
-            with self.get_session() as session:
-                session.execute("SELECT 1")
+            async with self.get_session() as session:
+                await session.execute(text("SELECT 1"))
             return True
         except SQLAlchemyError as e:
             self._logger.error(f"Database health check failed: {e}")

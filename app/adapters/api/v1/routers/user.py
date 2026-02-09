@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies import get_db, get_user_repository
 from app.domain.mappers.user_mapper import UserMapper
@@ -10,11 +11,11 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 
 @router.post("/test")
-def test_db_operations(
+async def test_db_operations(
     repository: UserRepository = Depends(get_user_repository),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    """Test endpoint for database operations"""
+    """Test endpoint for database operations."""
     try:
         # Create test user
         test_input = UserCreate(
@@ -23,10 +24,11 @@ def test_db_operations(
             password="fakepassword",
         )
         test_user = UserMapper.create_to_entity(test_input)
-        repository.create_user(db, test_user)
+        await repository.create_user(db, test_user)
 
         # Query users
-        users = db.query(repository.model).all()
+        result = await db.execute(select(repository.model))
+        users = result.scalars().all()
 
         return {
             "message": "Database test completed",
@@ -34,75 +36,79 @@ def test_db_operations(
             "users": [{"email": u.email, "full_name": u.full_name} for u in users],
         }
     except Exception as e:
-        db.rollback()
+        await db.rollback()
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.post("", response_model=UserRead)
-def create_user(
+async def create_user(
     user: UserCreate,
     repository: UserRepository = Depends(get_user_repository),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     try:
         entity = UserMapper.create_to_entity(user)
-        db_user = repository.create_user(db, entity)
+        db_user = await repository.create_user(db, entity)
         return UserMapper.to_read(db_user)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.get("/{user_id}", response_model=UserRead)
-def read_user(
+async def read_user(
     user_id: int,
     repository: UserRepository = Depends(get_user_repository),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    db_user = repository.get_user_by_id(db, user_id)
+    db_user = await repository.get_user_by_id(db, user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return UserMapper.to_read(db_user)
 
 
 @router.get("/by-email/{email}", response_model=UserRead)
-def read_user_by_email(
+async def read_user_by_email(
     email: str,
     repository: UserRepository = Depends(get_user_repository),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    db_user = repository.get_user_by_email(db, email)
+    db_user = await repository.get_user_by_email(db, email)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return UserMapper.to_read(db_user)
 
 
 @router.put("/{user_id}", response_model=UserRead)
-def update_user(
+async def update_user(
     user_id: int,
     user: UserUpdate,
     repository: UserRepository = Depends(get_user_repository),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    current = repository.get_user_by_id(db, user_id)
+    current = await repository.get_user_by_id(db, user_id)
     if not current:
         raise HTTPException(status_code=404, detail="User not found")
 
     try:
         entity = UserMapper.update_to_entity(user, current)
-        updated_user = repository.update(db, user_id, entity)
+        updated_user = await repository.update(db, user_id, entity)
         return UserMapper.to_read(updated_user)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.delete("/{user_id}")
-def delete_user(user_id: int, repository: UserRepository = Depends(get_user_repository), db: Session = Depends(get_db)):
-    db_user = repository.get_user_by_id(db, user_id)
+async def delete_user(
+    user_id: int,
+    repository: UserRepository = Depends(get_user_repository),
+    db: AsyncSession = Depends(get_db),
+):
+    db_user = await repository.get_user_by_id(db, user_id)
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
 
     try:
-        repository.delete(db, user_id)
+        await repository.delete(db, user_id)
         return {"message": "User deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

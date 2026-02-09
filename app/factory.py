@@ -29,7 +29,9 @@ def create_app() -> FastAPI:
 
     app.include_router(api_v1_router, prefix="/api/v1")
 
-    init_db()
+    @app.on_event("startup")
+    async def on_startup():
+        await init_db()
 
     @app.get("/welcome")
     async def welcome(logger = Depends(get_logger)):
@@ -50,6 +52,6 @@ def create_app() -> FastAPI:
     logger.debug("Application initialized")
     return app
 
-def init_db():
-    """Initialize database tables and schema"""
-    db_connector.create_database()
+async def init_db():
+    """Initialize database tables and schema."""
+    await db_connector.create_database()

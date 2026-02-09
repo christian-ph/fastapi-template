@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy import Column, Integer, DateTime
 from sqlalchemy.schema import CreateSchema
-from sqlalchemy.ext.declarative import declarative_base, declared_attr
+from sqlalchemy.orm import declarative_base, declared_attr
 from app.infrastructure.config import get_settings
 
 settings = get_settings()
@@ -17,12 +17,10 @@ class CustomBase:
 
 Base = declarative_base(cls=CustomBase)
 
-def create_schema(engine):
-    """Create the schema if it doesn't exist"""
+def create_schema(conn):
+    """Create the schema if it doesn't exist."""
     if not settings.DATABASE.DB_SCHEMA:
         return
     
-    with engine.connect() as conn:
-        if not conn.dialect.has_schema(conn, settings.DATABASE.DB_SCHEMA):
-            conn.execute(CreateSchema(settings.DATABASE.DB_SCHEMA))
-            conn.commit()
+    if not conn.dialect.has_schema(conn, settings.DATABASE.DB_SCHEMA):
+        conn.execute(CreateSchema(settings.DATABASE.DB_SCHEMA))
