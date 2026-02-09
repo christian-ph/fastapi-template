@@ -1,14 +1,15 @@
 # Template Project - FastAPI + PostgreSQL
 
-Python backend based on FastAPI with a layered architecture (adapters/domain/infrastructure), repository-based data access, and centralized configuration. It includes PostgreSQL integration, encryption for sensitive columns, colored logging, and Docker support. Python versioning, virtual environments, and dependencies are intended to be managed with `uv`.
+Python backend based on FastAPI with a layered architecture (adapters/domain/application/infrastructure), repository-based data access, and centralized configuration. It includes PostgreSQL integration, encryption for sensitive columns, colored logging, and Docker support. Python versioning, virtual environments, and dependencies are intended to be managed with `uv`.
 
 ## Project structure
 
 - `app/main.py`: FastAPI entrypoint.
 - `app/factory.py`: app creation, middleware, and routes.
 - `app/adapters/api/v1/routers/`: HTTP routers (health, users).
-- `app/domain/`: entities, repositories, and mappers.
-- `app/infrastructure/`: config, logging, DB, repositories.
+- `app/domain/`: entities and repository ports.
+- `app/application/`: DTOs and mappers.
+- `app/infrastructure/`: config, logging, DB, repositories, security.
 - `config/*.conf`: environment configuration (app and DB).
 - `main.py`: simple "Hello world" example.
 - `Dockerfile`, `docker-compose.yml`: containerization.
@@ -23,27 +24,29 @@ Python backend based on FastAPI with a layered architecture (adapters/domain/inf
   - `GET /welcome` returns environment and DB info.
   - `GET /ping` returns `pong`.
   - `GET /api/v1/health` basic health check.
-- User CRUD (repository + SQLAlchemy) with Pydantic input/output schemas:
+- User CRUD (async repository + SQLAlchemy) with Pydantic input/output schemas:
   - `POST /api/v1/users/test` DB write/read test.
   - `POST /api/v1/users` create user.
   - `GET /api/v1/users/{user_id}` read user.
   - `GET /api/v1/users/by-email/{email}` read by email.
   - `PUT /api/v1/users/{user_id}` update user.
   - `DELETE /api/v1/users/{user_id}` delete user.
-- Persistence with SQLAlchemy and PostgreSQL.
+- Async persistence with SQLAlchemy and PostgreSQL.
 - Encryption for sensitive columns (email, name, password) using `pgp_sym_encrypt`.
+- Password hashing with Argon2.
 - Colored logging with `coloredlogs`.
 - Configurable CORS.
 
 ## Tech stack
 
-- Python 3.9+
+- Python 3.14+
 - FastAPI
 - Uvicorn
 - SQLAlchemy 2.x
-- PostgreSQL (psycopg2)
+- PostgreSQL (psycopg3)
 - Pydantic v2 + pydantic-settings
 - Alembic (dependency included)
+- Argon2 (argon2-cffi)
 - Docker / Docker Compose
 
 ## Configuration
@@ -76,7 +79,7 @@ Key variables:
 ### 1) Local environment (uv)
 
 ```bash
-uv python install 3.10
+uv python install 3.14
 uv venv
 source .venv/bin/activate
 uv pip install -r requirements.txt
@@ -86,7 +89,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 Alternative (from `pyproject.toml`):
 
 ```bash
-uv python install 3.10
+uv python install 3.14
 uv venv
 source .venv/bin/activate
 uv sync
@@ -137,9 +140,7 @@ uv run pytest tests -v
 
 ## Future Improvements
 
-- Replace the password hashing with `bcrypt` or `argon2`.
 - Add extra validation and pagination for list endpoints.
 - Add Alembic migrations and data seeds.
 - Add authentication (JWT/OAuth2) and roles.
 - Add observability (metrics, tracing).
-
