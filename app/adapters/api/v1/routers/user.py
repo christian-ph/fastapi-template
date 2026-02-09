@@ -3,8 +3,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies import get_db, get_user_repository
-from app.domain.mappers.user_mapper import UserMapper
-from app.domain.schemas.user import UserCreate, UserRead, UserUpdate
+from app.application.mappers.user_mapper import UserMapper
+from app.application.dto.user import UserCreate, UserRead, UserUpdate
 from app.infrastructure.database.repositories.user_repository import UserRepository
 
 router = APIRouter(prefix="/users", tags=["users"])

@@ -1,7 +1,7 @@
+from app.application.dto.user import UserCreate, UserRead, UserUpdate
+from app.application.mappers.base import merge_update
 from app.domain.entities.user import UserEntity
-from app.domain.schemas.user import UserCreate, UserUpdate, UserRead
-from app.core.security import hash_password
-from app.domain.mappers.base import merge_update
+from app.infrastructure.security import hash_password
 
 
 class UserMapper:

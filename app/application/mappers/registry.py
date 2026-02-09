@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from app.domain.mappers.base import BaseMapper
+from app.application.mappers.base import BaseMapper
 
 
 class MapperRegistry:
