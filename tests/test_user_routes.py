@@ -24,7 +24,7 @@ def test_create_user_success(client, mock_user_repo):
     assert "id" in data
     assert "password" not in data
 
-    mock_user_repo.create_user.assert_called_once()
+    mock_user_repo.create_user.assert_awaited_once()
 
 
 def test_read_user_success(client, mock_user_repo, mock_db):
@@ -42,7 +42,7 @@ def test_read_user_success(client, mock_user_repo, mock_db):
     assert data["id"] == user_id
     assert data["email"] == "read@example.com"
 
-    mock_user_repo.get_user_by_id.assert_called_once_with(mock_db, user_id)
+    mock_user_repo.get_user_by_id.assert_awaited_once_with(mock_db, user_id)
 
 
 def test_read_user_not_found(client, mock_user_repo):
@@ -68,7 +68,7 @@ def test_read_user_by_email_success(client, mock_user_repo, mock_db):
     data = response.json()
     assert data["email"] == email
 
-    mock_user_repo.get_user_by_email.assert_called_once_with(mock_db, email)
+    mock_user_repo.get_user_by_email.assert_awaited_once_with(mock_db, email)
 
 
 def test_update_user_success(client, mock_user_repo):
@@ -93,7 +93,7 @@ def test_update_user_success(client, mock_user_repo):
     data = response.json()
     assert data["full_name"] == "Updated Name"
 
-    mock_user_repo.update.assert_called_once()
+    mock_user_repo.update.assert_awaited_once()
 
 
 def test_delete_user_success(client, mock_user_repo, mock_db):
@@ -107,4 +107,4 @@ def test_delete_user_success(client, mock_user_repo, mock_db):
     assert response.status_code == 200
     assert response.json()["message"] == "User deleted successfully"
 
-    mock_user_repo.delete.assert_called_once_with(mock_db, user_id)
+    mock_user_repo.delete.assert_awaited_once_with(mock_db, user_id)

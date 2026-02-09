@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, AsyncMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 # This prevents the app factory from trying to connect to a real DB during import/collection
 from app.infrastructure.database.connector import DatabaseConnector
 
-DatabaseConnector.create_database = MagicMock()
+DatabaseConnector.create_database = AsyncMock()
 
 from app.dependencies import get_db, get_user_repository
 from app.infrastructure.config import DatabaseSettings, Settings, get_settings
@@ -48,7 +48,13 @@ def mock_db():
 @pytest.fixture
 def mock_user_repo():
     """Fixture for a mocked user repository."""
-    return MagicMock(spec=UserRepository)
+    repo = MagicMock(spec=UserRepository)
+    repo.create_user = AsyncMock()
+    repo.get_user_by_id = AsyncMock()
+    repo.get_user_by_email = AsyncMock()
+    repo.update = AsyncMock()
+    repo.delete = AsyncMock()
+    return repo
 
 
 @pytest.fixture
@@ -58,8 +64,11 @@ def client(mock_user_repo, mock_db):
     Automatically handles repo and db mocking.
     """
     # Apply overrides
+    async def override_get_db():
+        yield mock_db
+
     app.dependency_overrides[get_user_repository] = lambda: mock_user_repo
-    app.dependency_overrides[get_db] = lambda: mock_db
+    app.dependency_overrides[get_db] = override_get_db
 
     with TestClient(app) as test_client:
         yield test_client

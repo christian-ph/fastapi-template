@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from app.infrastructure.config import get_settings
@@ -11,13 +12,19 @@ def create_app() -> FastAPI:
     settings = get_settings()
     logger = get_logger()
 
+    @asynccontextmanager
+    async def lifespan(_: FastAPI):
+        await init_db()
+        yield
+
     app = FastAPI(
         title=settings.APP_NAME,
         version="1.0.0",
         docs_url="/api/docs",
         redoc_url="/api/redoc",
         openapi_url="/api/openapi.json",
-        debug=settings.DEBUG
+        debug=settings.DEBUG,
+        lifespan=lifespan,
     )
 
     app.add_middleware(
@@ -28,10 +35,6 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(api_v1_router, prefix="/api/v1")
-
-    @app.on_event("startup")
-    async def on_startup():
-        await init_db()
 
     @app.get("/welcome")
     async def welcome(logger = Depends(get_logger)):

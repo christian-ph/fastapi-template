@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, get_type_hints
 
 from dotenv import load_dotenv
-from pydantic import Field
+from pydantic import Field, ConfigDict
 from pydantic_settings import BaseSettings
 
 
@@ -20,9 +20,7 @@ class DatabaseSettings(BaseSettings):
     POOL_SIZE: int = 5
     MAX_OVERFLOW: int = 10
 
-    class Config:
-        env_file = ".env"
-        extra = "ignore"
+    model_config = ConfigDict(env_file=".env", extra="ignore")
 
     @property
     def DATABASE_URL(self) -> str:
@@ -39,17 +37,7 @@ class Settings(BaseSettings):
     DATABASE: DatabaseSettings | None = None  # Initialized dynamically later
     SECRET_KEY: str = Field(default=os.getenv("SECRET_KEY", "fallback_secret_key"))
 
-    class Config:
-        """
-        Pydantic configuration for Settings class.
-
-        Attributes:
-            env_file: Path to .env file to load environment variables from (default: ".env")
-            extra: How to handle extra fields ("ignore" to skip them)
-        """
-
-        env_file = ".env"
-        extra = "ignore"
+    model_config = ConfigDict(env_file=".env", extra="ignore")
 
     @classmethod
     def load_configs(cls):
