@@ -15,7 +15,7 @@ venv/
 ENV/
 .env
 
-.codexs
+.codex
 
 # --- STATIC TYPE CHECKERS & LINTERS ---
 .mypy_cache/
@@ -42,4 +42,3 @@ ENV/
 dist/
 build/
 *.egg-info/
-
