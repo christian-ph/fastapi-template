@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Any, get_type_hints
 
 from dotenv import load_dotenv
-from pydantic import Field, ConfigDict
-from pydantic_settings import BaseSettings
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class DatabaseSettings(BaseSettings):
@@ -20,11 +20,11 @@ class DatabaseSettings(BaseSettings):
     POOL_SIZE: int = 5
     MAX_OVERFLOW: int = 10
 
-    model_config = ConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @property
     def DATABASE_URL(self) -> str:
-        return f"postgresql://{self.USER}:{self.PASSWORD}@{self.HOST}:{self.PORT}/{self.DB_NAME}"
+        return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.HOST}:{self.PORT}/{self.DB_NAME}"
 
 
 class Settings(BaseSettings):
@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     DATABASE: DatabaseSettings | None = None  # Initialized dynamically later
     SECRET_KEY: str = Field(default=os.getenv("SECRET_KEY", "fallback_secret_key"))
 
-    model_config = ConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @classmethod
     def load_configs(cls):
@@ -47,15 +47,17 @@ class Settings(BaseSettings):
             if re.match(r".*\.conf$", file):
                 config.read(config_dir / file)
 
-        def parse_conf_section(model_cls: type[BaseSettings], conf_section: dict[str, Any]) -> dict[str, Any]:
-            parsed = {}
+        def parse_conf_section(
+            model_cls: type[BaseSettings],
+            conf_section: dict[str, Any],
+        ) -> dict[str, Any]:
+            parsed: dict[str, Any] = {}
             model_types = get_type_hints(model_cls)
             for k, raw_value in conf_section.items():
                 field = k.upper()
                 if field not in model_cls.model_fields:
                     continue
 
-                # Convertir valor a string primero
                 value = str(raw_value) if raw_value is not None else ""
 
                 try:
@@ -72,7 +74,10 @@ class Settings(BaseSettings):
                     print(f"Error parsing field {field}: {e}")
             return parsed
 
-        def merge_env_with_conf(model_cls: type[BaseSettings], conf_section: dict[str, str]) -> BaseSettings:
+        def merge_env_with_conf(
+            model_cls: type[BaseSettings],
+            conf_section: dict[str, str],
+        ) -> BaseSettings:
             # Load values from .env
             env_values = model_cls().model_dump()
 
@@ -82,7 +87,12 @@ class Settings(BaseSettings):
             # Merge: .env takes priority; .conf fills missing fields
             combined = {**conf_values, **env_values}
 
-            print(f"Combined config - ENV: {env_values} | CONF: {conf_values} | FINAL: {combined}")
+            print(
+                "Combined config - ENV: %s | CONF: %s | FINAL: %s",
+                env_values,
+                conf_values,
+                combined,
+            )
             return model_cls(**combined)
 
         load_dotenv()
@@ -95,7 +105,7 @@ class Settings(BaseSettings):
         if "POSTGRESQL" in config:
             db_section = dict(config["POSTGRESQL"].items())
 
-        print(f"Loading database configuration: {db_section}")
+        print("Loading database configuration: %s", db_section)
 
         db_kwargs = merge_env_with_conf(DatabaseSettings, db_section)
 

@@ -1,23 +1,24 @@
-from typing import Any, Callable, Protocol
-from pydantic import BaseModel
+from collections.abc import Callable
+from typing import Any, Protocol
 
+from pydantic import BaseModel
 
 type TransformFn = Callable[[Any], Any]
 
 
-class BaseMapper[EntityT: BaseModel, CreateT: BaseModel, UpdateT: BaseModel, ReadT: BaseModel](
-    Protocol
-):
+class BaseMapper[
+    EntityT: BaseModel,
+    CreateT: BaseModel,
+    UpdateT: BaseModel,
+    ReadT: BaseModel,
+](Protocol):
     """Protocol for mapper implementations."""
 
-    def create_to_entity(self, create_dto: CreateT) -> EntityT:
-        ...
+    def create_to_entity(self, create_dto: CreateT) -> EntityT: ...
 
-    def update_to_entity(self, update_dto: UpdateT, current: EntityT) -> EntityT:
-        ...
+    def update_to_entity(self, update_dto: UpdateT, current: EntityT) -> EntityT: ...
 
-    def to_read(self, entity: EntityT) -> ReadT:
-        ...
+    def to_read(self, entity: EntityT) -> ReadT: ...
 
 
 def merge_update[

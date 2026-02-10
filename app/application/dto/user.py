@@ -1,5 +1,4 @@
-from typing import Optional
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 class UserBase(BaseModel):
@@ -12,11 +11,11 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(BaseModel):
-    email: Optional[EmailStr] = None
-    full_name: Optional[str] = None
-    password: Optional[str] = None
-    is_active: Optional[bool] = None
-    is_superuser: Optional[bool] = None
+    email: EmailStr | None = None
+    full_name: str | None = None
+    password: str | None = None
+    is_active: bool | None = None
+    is_superuser: bool | None = None
 
 
 class UserRead(UserBase):

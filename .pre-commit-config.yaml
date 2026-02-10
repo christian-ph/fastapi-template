@@ -10,21 +10,18 @@ repos:
 
   - repo: local
     hooks:
+      # Ruff Linter + ISORT (Todo en uno)
       - id: ruff-lint
-        name: ruff (lint)
-        entry: uv run ruff check .
+        name: ruff (lint & isort)
+        # Importante: añadimos --fix y --select I para que actúe como isort
+        entry: uv run ruff check --fix --select I,E,F,UP,B
         language: system
         types: [python]
 
+      # Ruff Formatter (estilo de código)
       - id: ruff-format
         name: ruff (format)
-        entry: uv run ruff format .
-        language: system
-        types: [python]
-
-      - id: isort
-        name: isort
-        entry: uv run isort .
+        entry: uv run ruff format
         language: system
         types: [python]
 
@@ -33,9 +30,11 @@ repos:
         entry: uv run mypy .
         language: system
         types: [python]
+        pass_filenames: false
 
       - id: pytest
         name: pytest
         entry: uv run pytest tests -v
         language: system
         pass_filenames: false
+        always_run: true

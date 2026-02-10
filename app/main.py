@@ -1,6 +1,7 @@
+import uvicorn
+
 from app.factory import create_app
 from app.infrastructure.logging import logger
-import uvicorn
 
 app = create_app()
 

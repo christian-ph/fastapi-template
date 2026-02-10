@@ -1,43 +1,66 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.domain.entities.user import UserEntity
-from app.domain.repositories.user_repository import UserRepository as UserRepositoryInterface
-from app.infrastructure.database.models.user import User as UserModel
-from app.infrastructure.database.repositories.base_repository_impl import BaseRepositoryImpl
-from typing import Optional
-from app.infrastructure.logging.base_logger import BaseLogger
+from app.domain.repositories.user_repository import (
+    UserRepository as UserRepositoryInterface,
+)
 from app.infrastructure.config import Settings
+from app.infrastructure.database.models.user import User as UserModel
+from app.infrastructure.database.repositories.base_repository_impl import (
+    BaseRepositoryImpl,
+)
+from app.infrastructure.logging.base_logger import BaseLogger
 
 
 class UserRepository(BaseRepositoryImpl[UserModel], UserRepositoryInterface):
     """
     Repository class for User operations.
     """
+
     def __init__(self, logger: BaseLogger, settings: Settings):
         super().__init__(UserModel, logger, settings)
-    
+
     async def create_user(self, db: AsyncSession, user: UserEntity) -> UserEntity:
         """Create a new user."""
         db_user = self._to_model(user)
         created_user = await self.create(db, db_user)
         return self._to_entity(created_user)
-    
-    async def get_user_by_email(self, db: AsyncSession, email: str) -> Optional[UserEntity]:
+
+    async def get_user_by_email(
+        self,
+        db: AsyncSession,
+        email: str,
+    ) -> UserEntity | None:
         """Get a user by email."""
-        stmt = select(UserModel).where(UserModel.decrypted_email == email)
+        stmt = select(UserModel).where(UserModel.decrypted_email == email)  # type: ignore[arg-type]
         result = await db.execute(stmt)
         db_user = result.scalars().first()
         if db_user is None:
             return None
         return self._to_entity(db_user)
-    
-    async def get_user_by_id(self, db: AsyncSession, user_id: int) -> Optional[UserEntity]:
+
+    async def get_user_by_id(self, db: AsyncSession, user_id: int) -> UserEntity | None:
         """Get a user by ID."""
         db_user = await self.read(db, user_id)
         if db_user is None:
             return None
         return self._to_entity(db_user)
-    
+
+    async def update_user(
+        self,
+        db: AsyncSession,
+        user_id: int,
+        user: UserEntity,
+    ) -> UserEntity:
+        """Update a user."""
+        db_user = await self.update(db, user_id, self._to_model(user))
+        return self._to_entity(db_user)
+
+    async def delete_user(self, db: AsyncSession, user_id: int) -> None:
+        """Delete a user."""
+        await self.delete(db, user_id)
+
     def _to_entity(self, model: UserModel) -> UserEntity:
         """Convert database model to domain entity."""
         return UserEntity(
@@ -48,7 +71,7 @@ class UserRepository(BaseRepositoryImpl[UserModel], UserRepositoryInterface):
             is_active=model.is_active,
             is_superuser=model.is_superuser,
         )
-    
+
     def _to_model(self, entity: UserEntity) -> UserModel:
         """Convert domain entity to database model."""
         return UserModel(

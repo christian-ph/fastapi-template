@@ -1,9 +1,8 @@
-from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 
 class UserEntity(BaseModel):
-    id: Optional[int] = None
+    id: int | None = None
     email: str
     full_name: str
     hashed_password: str

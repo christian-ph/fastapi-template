@@ -138,6 +138,28 @@ To run tests with broad output:
 uv run pytest tests -v
 ```
 
+## Pre-commit hooks
+
+Pre-commit is used to enforce formatting, linting, typing, and tests before commit.
+
+### Install hooks
+
+```bash
+uv run pre-commit install
+```
+
+### Run all hooks
+
+```bash
+uv run pre-commit run --all-files
+```
+
+### Run a single hook
+
+```bash
+uv run pre-commit run ruff-lint
+```
+
 ## Future Improvements
 
 - Add extra validation and pagination for list endpoints.

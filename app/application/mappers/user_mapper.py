@@ -25,6 +25,8 @@ class UserMapper:
 
     @staticmethod
     def to_read(entity: UserEntity) -> UserRead:
+        if entity.id is None:
+            raise ValueError("UserEntity.id is required for UserRead")
         return UserRead(
             id=entity.id,
             email=entity.email,
